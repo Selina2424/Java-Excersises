@@ -30,20 +30,20 @@ public class OrderDaoFileImpl implements OrderDao {
     private static final DateTimeFormatter FILE_DATE = DateTimeFormatter.ofPattern("MMddyyyy");
     private String orderFolder;
 
-    // First find a date, then find an order number within that date's map.
+    //first find a date, then find an order number within that dates map
     private Map<LocalDate, Map<Integer, Order>> orders = new HashMap<>();
 
-    // App uses the normal Orders folder.
+    //app uses the normal Orders folder.
     public OrderDaoFileImpl() {
         this(ORDER_FOLDER);
     }
 
-    // Tests can supply a different folder so they never change your real orders.
+    //tests can supply a different folder so they never change your real orders
     public OrderDaoFileImpl(String orderFolder) {
         this.orderFolder = orderFolder;
     }
 
-    // Find the highest existing number across every date, then add one.
+    //find the highest existing number across every date then add one
     @Override
     public int getNextOrderNumber() throws PersistenceException {
         loadFromFile();
@@ -61,7 +61,7 @@ public class OrderDaoFileImpl implements OrderDao {
         return largestOrderNumber + 1;
     }
 
-    // Put a confirmed new order into its date's map and save that date's file.
+    //put a confirmed new order into its date's map and save that date's file
     @Override
     public Order addOrder(Order order) throws PersistenceException {
         loadFromFile();
@@ -81,7 +81,7 @@ public class OrderDaoFileImpl implements OrderDao {
         return new Order(order);
     }
 
-    // Return one order, or null when that date and number are not found.
+    //return one order, or null when that date and number are not found
     @Override
     public Order getOrder(LocalDate date, int orderNumber) throws PersistenceException {
         loadFromFile();
@@ -89,11 +89,11 @@ public class OrderDaoFileImpl implements OrderDao {
         if (dailyOrders == null || !dailyOrders.containsKey(orderNumber)) {
             return null;
         }
-        // Return a copy: changing it must not change the DAO until an edit is confirmed.
+        //return a copy: changing it must not change the DAO until an edit is confirmed
         return new Order(dailyOrders.get(orderNumber));
     }
 
-    // Return this date's orders in order-number order for a clear display.
+    //return this date's orders in order number order for a clear display
     @Override
     public List<Order> getOrdersForDate(LocalDate date) throws PersistenceException {
         loadFromFile();
@@ -108,7 +108,7 @@ public class OrderDaoFileImpl implements OrderDao {
         return orderList;
     }
 
-    // Copy every date's orders so the service can pass them to the export DAO.
+    //copy every date's orders so the service can pass them to the export DAO
     @Override
     public Map<LocalDate, Map<Integer, Order>> getAllOrders() throws PersistenceException {
         loadFromFile();
@@ -123,7 +123,8 @@ public class OrderDaoFileImpl implements OrderDao {
         return copy;
     }
 
-    // Replace a confirmed order. Return null if it no longer exists.
+    //replace a confirmed order
+    //return null if it no longer exists
     @Override
     public Order editOrder(Order order) throws PersistenceException {
         loadFromFile();
@@ -139,7 +140,7 @@ public class OrderDaoFileImpl implements OrderDao {
         return new Order(order);
     }
 
-    // Remove one confirmed order and rewrite the affected date's file.
+    //remove one confirmed order and rewrite the affected date's file
     @Override
     public Order removeOrder(LocalDate date, int orderNumber) throws PersistenceException {
         loadFromFile();
@@ -154,13 +155,13 @@ public class OrderDaoFileImpl implements OrderDao {
         return new Order(removed);
     }
 
-    // Load fresh data so deleted records cannot remain in an old map.
+    //load fresh data so deleted records cannot remain in an old map
     private void loadFromFile() throws PersistenceException {
         Map<LocalDate, Map<Integer, Order>> loaded = new HashMap<>();
         List<Integer> usedNumbers = new ArrayList<>();
         File folder = new File(orderFolder);
         if (!folder.exists()) {
-            orders = loaded; // A new installation may not have any orders yet.
+            orders = loaded; //a new installation may not have any orders yet
             return;
         }
         File[] files = folder.listFiles();
@@ -170,14 +171,14 @@ public class OrderDaoFileImpl implements OrderDao {
         for (File file : files) {
             String name = file.getName();
             if (!name.startsWith("Orders_") || !name.endsWith(".txt")) {
-                continue; // Ignore unrelated files in the folder.
+                continue; //ignore unrelated files in the folder
             }
             if (name.length() != 19) {
                 throw new PersistenceException("Invalid order filename: " + name);
             }
             LocalDate date;
             try {
-                // Orders_01022030.txt: characters 7 to 14 contain the date.
+                //Orders_01022030.txt: characters 7 to 14 contain the date
                 String dateText = name.substring(7, 15);
                 date = LocalDate.parse(dateText, FILE_DATE);
                 //format the date back to text to check the filename format
@@ -196,11 +197,11 @@ public class OrderDaoFileImpl implements OrderDao {
             }
             loaded.put(date, dailyOrders);
         }
-        // Only replace the existing map after all files have been read successfully.
+        //only replace the existing map after all files have been read successfully
         orders = loaded;
     }
 
-    // Read one header and convert each data line into an Order object.
+    //read one header and convert each data line into an Order object
     private Map<Integer, Order> readOrderFile(File file, LocalDate date) throws PersistenceException {
         Scanner scanner;
         try {
@@ -233,12 +234,12 @@ public class OrderDaoFileImpl implements OrderDao {
             throw new PersistenceException("Invalid order in " + file.getName()
                     + " at line " + lineNumber + ": " + e.getMessage(), e);
         } finally {
-            scanner.close(); // finally runs whether reading succeeds or an exception is thrown.
+            scanner.close(); //finally runs whether reading succeeds or an exception is thrown
         }
         return dailyOrders;
     }
 
-    // Write the header followed by each order, using PrintWriter like ClassRoster.
+    //write the header followed by each order by using PrintWriter
     private void writeToFile(LocalDate date, Map<Integer, Order> dailyOrders) throws PersistenceException {
         File folder = new File(orderFolder);
         if (!folder.exists() && !folder.mkdirs()) {
@@ -253,7 +254,7 @@ public class OrderDaoFileImpl implements OrderDao {
         }
         PrintWriter out;
         try {
-            // FileWriter without 'true' replaces the old contents instead of appending.
+            //fileWriter without 'true' replaces the old contents instead of appending
             out = new PrintWriter(new FileWriter(file));
         } catch (IOException e) {
             throw new PersistenceException("Could not save orders to " + file, e);
@@ -262,14 +263,14 @@ public class OrderDaoFileImpl implements OrderDao {
         for (String line : lines) {
             out.println(line);
         }
-        out.close(); // close also flushes pending text to the file.
+        out.close(); //close also outputs pending text to the file
         if (out.checkError()) {
             throw new PersistenceException("An error occurred while saving " + file);
         }
-        // An empty list still writes the header, so removing the last order works.
+        //an empty list still writes the header, so removing the last order works
     }
 
-    //Turns an Order object into one line for the order file
+    //turns an order object into one line for the order file
     private String marshallOrder(Order order) {
         String orderAsText = order.getOrderNumber() + DELIMITER;
         orderAsText += addQuotesToCustomerName(order.getCustomerName()) + DELIMITER;
@@ -286,7 +287,7 @@ public class OrderDaoFileImpl implements OrderDao {
         return orderAsText;
     }
 
-    //Turns one line from an order file back into an Order object
+    //turns one line from an order file back into an Order object
     private Order unmarshallOrder(String orderAsText, LocalDate orderDate) {
         List<String> orderTokens = splitOrderLine(orderAsText);
         if (orderTokens.size() != 12) {
@@ -306,7 +307,7 @@ public class OrderDaoFileImpl implements OrderDao {
         orderFromFile.setLabourCost(new BigDecimal(orderTokens.get(9).trim()));
         orderFromFile.setTax(new BigDecimal(orderTokens.get(10).trim()));
         orderFromFile.setTotal(new BigDecimal(orderTokens.get(11).trim()));
-        //The order date comes from the order filename
+        //the order date comes from the order filename
         Date dateForOrder = Date.from(orderDate.atStartOfDay(ZoneId.systemDefault()).toInstant());
         orderFromFile.setOrderDate(dateForOrder);
 
@@ -316,7 +317,7 @@ public class OrderDaoFileImpl implements OrderDao {
         return orderFromFile;
     }
 
-    //Adds quotes only when the valid customer name contains a comma
+    //adds quotes only when the valid customer name contains a comma
     private String addQuotesToCustomerName(String customerName) {
         if (customerName.contains(",")) {
             return "\"" + customerName + "\"";
@@ -324,7 +325,7 @@ public class OrderDaoFileImpl implements OrderDao {
         return customerName;
     }
 
-    //Splits a line while keeping a comma inside a quoted customer name
+    //splits a line while keeping a comma inside a quoted customer name
     private List<String> splitOrderLine(String line) {
         List<String> fields = new ArrayList<>();
         String currentField = "";
@@ -348,7 +349,7 @@ public class OrderDaoFileImpl implements OrderDao {
         return fields;
     }
 
-    // Convert the Date stored in Order into the LocalDate used as the map key.
+    //convert the date stored in Order into the LocalDate used as the map key
     private LocalDate convertToLocalDate(Date date) {
         return date.toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
     }
