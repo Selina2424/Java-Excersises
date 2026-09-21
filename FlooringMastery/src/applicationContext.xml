@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans
+       https://www.springframework.org/schema/beans/spring-beans.xsd">
+
+    <!--creates console object-->
+    <bean id="userIo"
+          class="com.sg.flooringmastery.ui.UserIOConsoleImpl"/>
+
+    <!--gives UserIo to the view constructor-->
+    <bean id="view"
+          class="com.sg.flooringmastery.ui.FlooringMasteryView">
+        <constructor-arg ref="userIo"/>
+    </bean>
+
+    <!--creates each files DAO-->
+    <bean id="orderDao"
+          class="com.sg.flooringmastery.dao.OrderDaoFileImpl"/>
+    <bean id="taxDao"
+          class="com.sg.flooringmastery.dao.TaxDaoFileImpl"/>
+    <bean id="productDao"
+          class="com.sg.flooringmastery.dao.ProductDaoFileImpl"/>
+    <bean id="exportDao"
+          class="com.sg.flooringmastery.dao.ExportDaoFileImpl"/>
+    <bean id="auditDao"
+          class="com.sg.flooringmastery.dao.AuditDaoFileImpl"/>
+
+    <!--gives all five DAOs to the service constructor-->
+    <bean id="service"
+          class="com.sg.flooringmastery.service.ServiceLayerImpl">
+        <constructor-arg ref="orderDao"/>
+        <constructor-arg ref="taxDao"/>
+        <constructor-arg ref="productDao"/>
+        <constructor-arg ref="exportDao"/>
+        <constructor-arg ref="auditDao"/>
+    </bean>
+
+    <!--gives the service and view to the controller constructor-->
+    <bean id="controller"
+          class="com.sg.flooringmastery.controller.Controller">
+        <constructor-arg ref="service"/>
+        <constructor-arg ref="view"/>
+    </bean>
+
+</beans>
