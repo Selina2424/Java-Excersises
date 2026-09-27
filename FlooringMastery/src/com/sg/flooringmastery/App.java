@@ -11,7 +11,7 @@ public class App {
                 new ClassPathXmlApplicationContext("applicationContext.xml");
 
         //gets the completed controller object from Spring
-        Controller controller = context.getBean("controller", Controller.class);
+        Controller controller = context.getBean("fmc", Controller.class);
         controller.run();
     }
 }

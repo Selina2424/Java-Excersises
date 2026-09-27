@@ -34,6 +34,7 @@ public class ServiceLayerImplTest {
         Tax california = new Tax("California");
         california.setStateAbr("CA");
         california.setTaxRate(new BigDecimal("25.00"));
+        //when taxdao is called return list containing california
         TaxDao taxDao = () -> Arrays.asList(california);
 
         Product tile = new Product();
@@ -43,6 +44,7 @@ public class ServiceLayerImplTest {
         ProductDao productDao = () -> Arrays.asList(tile);
 
         ExportDao exportDao = allOrders -> { };
+        //when audit dao is called it adds entry to audit
         AuditDao auditDao = entry -> auditEntries.add(entry);
 
         service = new ServiceLayerImpl(orderDao, taxDao, productDao,
@@ -93,7 +95,7 @@ public class ServiceLayerImplTest {
     public void testUnknownStateIsRejected() {
         Order order = createOrder(LocalDate.now().plusDays(1));
         order.setState("XX");
-
+        //takes order into prepare new order and checks error based on service
         assertThrows(IllegalArgumentException.class,
                 () -> service.prepareNewOrder(order));
     }
